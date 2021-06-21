@@ -47,11 +47,11 @@ class VectorIterator
         {
             return *(m_ptr);
         }
-        bool operator==(VectorIterator& other) const
+        bool operator==(const VectorIterator& other) const
         {
             return (m_ptr == other.m_ptr);
         }
-        bool operator!=(VectorIterator& other) const
+        bool operator!=(const VectorIterator& other) const
         {
             return !(*this == other);
         }

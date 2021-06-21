@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "VectorIterator.hpp"
+#include  <exception>
 
 template<typename T>
 class Vector
@@ -12,46 +13,53 @@ class Vector
     public :
         Vector() : m_data(nullptr), m_size(0), m_capacity(0)
         {
-            alloc(2);
+            alloc(2, 0);
         }
         Vector(unsigned int n, T value)
         {
-            alloc(n);
+            alloc(n, 0);
             for (unsigned int i = 0; i < n; i++)
-                push_back(value);
+            {
+                m_size = i;
+                m_data[i] = value;
+            }
+            m_size++;
         }
         ~Vector()
         {
             clear();
             // delete [] m_data;
         }
+        Vector& operator=(const Vector& x)
+        {
+            for(int i = 0; i < m_size; i++)
+                m_data[i].~T();
+            alloc(x.m_size, 0);
+            for (unsigned int i = 0; i < x.m_size; i++)
+                m_data[i] = x.m_data[i];
+            m_size = x.m_size;
+            return (*this);
+        }
         const    T& operator[](size_t index) const
         {
-            if (index >= m_size)
-                std::cout << "index greater than size" << std::endl;
+            // if (index >= m_size)
+            //     std::cout << "index greater than size" << std::endl;
             return (m_data[index]);
         }
         T& operator[](size_t index)
         {
-            if (index >= m_size)
-                std::cout << "index greater than size" << std::endl;
+            // if (index >= m_size)
+            //     std::cout << "index greater than size" << std::endl;
             return (m_data[index]);
         }
         void    push_back(const T& value)
         {
             if (m_size > m_capacity)
-                alloc(m_capacity + 2);
+                alloc(m_capacity, 0);
             m_data[m_size] = value;
             m_size++;
         }
         size_t  size() {return (m_size);}
-        T& emplace_back(const T& value)
-        {
-            if (m_size >= m_capacity)
-                alloc(m_capacity + 2);
-            m_data[m_size] = std::move(value);
-            return (m_data[m_size++]);
-        }
         void    pop_back()
         {
             if (m_size > 0)
@@ -67,21 +75,82 @@ class Vector
             m_size = 0;
         }
         Iterator begin() {return (Iterator(m_data));}
+        Iterator rbegin() {return (Iterator(m_data));}
         Iterator end() {return (Iterator(m_data + m_size));}
-
+        Iterator rend() {return (Iterator(m_data + m_size));}
+        size_t  capacity(){ return(m_capacity);}
+        size_t  max_size(){ return (4611686018427387903);}
+        bool    empty()
+        {
+            if (m_size == 0)
+                return (1);
+            return (0);
+        }
+        T&  at(unsigned int n)
+        {
+            if (n >= m_size)
+                throw OutOfRange();
+            return (m_data[n]);
+        }
+        T&  front() {return(m_data[0]);}
+        T&  back() {return(m_data[m_size - 1]);}
+        void    assign(size_t n, const T& value)
+        {
+            alloc(n, 1);
+            for (unsigned int i = 0; i < n; i++)
+                m_data[i] = value;;
+        }
+        Iterator insert(Iterator position, const T& value)
+        {
+            int i = 0;
+            int j;
+            for(Iterator it = begin(); it != position; it++)
+                i++;
+            i++;
+            for (j = m_size; j >= i; j--)
+                m_data[j] = m_data[j - 1];
+            m_data[j] = value;
+            m_size++;
+            m_capacity *= 2;
+            return (position);
+        }
+        void    insert(Iterator position, size_t n, const T& value)
+        {
+            int i = 0;
+            int j;
+            for(Iterator it = begin(); it != position; it++)
+                i++;
+            i++;
+            for (j = (m_size - 1) + n; j >= i; j--)
+                m_data[j] = m_data[j - n];
+            for (int k = j + n; k > 0; k--)
+            {
+                m_data[k] = value;
+                m_size++;
+            }
+            m_capacity *= 2;
+        }
+        class OutOfRange : public std::exception
+		{
+			public :
+				OutOfRange() throw(){}
+				virtual ~OutOfRange() throw(){}
+				virtual const char* what() const throw() {return ("vector");}
+		};
     private :
-        void    alloc(size_t newCapacity)
+        void    alloc(size_t newCapacity, int n)
         {
             T* newBlock = (T*)::operator new(newCapacity * sizeof(T));
             if (newCapacity < m_size)
                 m_size  = newCapacity;
             for (size_t i = 0; i < m_size; i++)
                 newBlock[i] = std::move(m_data[i]);
-            for(size_t i = 0; i < m_size; i++)
+            for (size_t i = 0; i < m_size; i++)
                 m_data[i].~T();
         //    delete[] m_data;
             m_data = newBlock;
-            m_capacity = newCapacity;
+            if (!n)
+                m_capacity = newCapacity;
         }
         size_t  m_size;
         size_t  m_capacity;
