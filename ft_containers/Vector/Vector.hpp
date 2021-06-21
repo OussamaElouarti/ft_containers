@@ -15,7 +15,7 @@ class Vector
         {
             alloc(2, 0);
         }
-        Vector(unsigned int n, T value)
+        Vector(unsigned int n, T value) : m_data(nullptr), m_size(0), m_capacity(0)
         {
             alloc(n, 0);
             for (unsigned int i = 0; i < n; i++)
@@ -25,10 +25,14 @@ class Vector
             }
             m_size++;
         }
+        Vector(Iterator first, Iterator last)
+        {
+            
+        }
         ~Vector()
         {
             clear();
-            // delete [] m_data;
+            delete [] m_data;
         }
         Vector& operator=(const Vector& x)
         {
@@ -118,17 +122,28 @@ class Vector
         {
             int i = 0;
             int j;
+            int k;
+            T* newBlock = (T*)::operator new(m_size * sizeof(T));
+            for (size_t i = 0; i < m_size; i++)
+                newBlock[i] = std::move(m_data[i]);
             for(Iterator it = begin(); it != position; it++)
                 i++;
-            i++;
-            for (j = (m_size - 1) + n; j >= i; j--)
-                m_data[j] = m_data[j - n];
-            for (int k = j + n; k > 0; k--)
+            alloc(m_capacity * 2, 0);
+            for (j = 0; j < i; j++)
+                m_data[j] = newBlock[j];
+            int l = j;
+             for (k = 0; k < n; k++)
             {
-                m_data[k] = value;
+                m_data[j] = value;
+                j++;
                 m_size++;
             }
-            m_capacity *= 2;
+            while (newBlock[l] && m_data[j])
+            {
+                m_data[j] = newBlock[l++];
+                j++;
+            }
+            delete [] newBlock;
         }
         class OutOfRange : public std::exception
 		{
@@ -147,7 +162,11 @@ class Vector
                 newBlock[i] = std::move(m_data[i]);
             for (size_t i = 0; i < m_size; i++)
                 m_data[i].~T();
-        //    delete[] m_data;
+            if (m_data)
+            {
+                delete[] m_data;
+                m_data = nullptr;
+            }
             m_data = newBlock;
             if (!n)
                 m_capacity = newCapacity;
