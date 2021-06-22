@@ -13,6 +13,8 @@ class VectorIterator
     public :
         VectorIterator(PointerType ptr) :m_ptr(ptr)
         {}
+        VectorIterator() :m_ptr(nullptr)
+        {}
         VectorIterator& operator++()
         {
             m_ptr++;

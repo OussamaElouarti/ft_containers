@@ -15,8 +15,12 @@ class Vector
         {
             alloc(2, 0);
         }
-        Vector(unsigned int n, T value) : m_data(nullptr), m_size(0), m_capacity(0)
+        Vector(unsigned long long n, T value) : m_data(nullptr), m_size(0), m_capacity(0)
         {
+            if (n > 4611686018427387903)
+                throw OutOfRange();
+            else if (n == 4611686018427387903)
+                throw BadAlloc();
             alloc(n, 0);
             for (unsigned int i = 0; i < n; i++)
             {
@@ -25,21 +29,34 @@ class Vector
             }
             m_size++;
         }
-        Vector(Iterator first, Iterator last)
+        Vector(Iterator first, Iterator last) : m_data(nullptr), m_size(0), m_capacity(0)
         {
-            
+            size_t i = 0;
+            for (Iterator it = first; it != last; it++)
+                i++;
+            alloc(i, 0);
+            for(size_t j = 0; i > j; j++)
+            {
+                m_size++;
+                m_data[j] = *first;
+                first++;
+            }
         }
         ~Vector()
         {
             clear();
-            delete [] m_data;
+            if (m_data)
+            {
+                delete[] m_data;
+                m_data = nullptr;
+            }
         }
         Vector& operator=(const Vector& x)
         {
-            for(int i = 0; i < m_size; i++)
+            for(size_t i = 0; i < m_size; i++)
                 m_data[i].~T();
             alloc(x.m_size, 0);
-            for (unsigned int i = 0; i < x.m_size; i++)
+            for (size_t i = 0; i < x.m_size; i++)
                 m_data[i] = x.m_data[i];
             m_size = x.m_size;
             return (*this);
@@ -74,7 +91,7 @@ class Vector
         }
         void    clear()
         {
-            for(int i = 0; i < m_size; i++)
+            for(size_t i = 0; i < m_size; i++)
                 m_data[i].~T();
             m_size = 0;
         }
@@ -122,7 +139,7 @@ class Vector
         {
             int i = 0;
             int j;
-            int k;
+            size_t k;
             T* newBlock = (T*)::operator new(m_size * sizeof(T));
             for (size_t i = 0; i < m_size; i++)
                 newBlock[i] = std::move(m_data[i]);
@@ -145,12 +162,78 @@ class Vector
             }
             delete [] newBlock;
         }
+        void    insert(Iterator position, Iterator first, Iterator last)
+        {
+            size_t n = 0;
+            int i = 0;
+            int j;
+            size_t k;
+            for (Iterator it = first; it != last; it++)
+                n++;
+            T* newBlock = (T*)::operator new(m_size * sizeof(T));
+            for (size_t i = 0; i < m_size; i++)
+                newBlock[i] = std::move(m_data[i]);
+            for(Iterator it = begin(); it != position; it++)
+                i++;
+            alloc(m_capacity + n, 0);
+            for (j = 0; j < i; j++)
+                m_data[j] = newBlock[j];
+            int l = j;
+             for (k = 0; k < n; k++)
+            {
+                m_data[j] = *first;
+                j++;
+                first++;
+                m_size++;
+            }
+            while (newBlock[l] && m_data[j - 1])
+            {
+                m_data[j] = newBlock[l++];
+                j++;
+            }
+            delete [] newBlock;
+        }
+        void    resize(size_t n, T value)
+        {
+            if (n > 4611686018427387903)
+                throw OutOfRange();
+            else if (n == 4611686018427387903)
+                throw BadAlloc();
+            if (n > m_capacity)
+            {
+                alloc(n, 0);
+                for (int i = m_size; m_size < n; m_size++)
+                    m_data[m_size] = value;
+            }
+            else
+            {
+                for (int i = m_size; i > n; i--)
+                    m_data[m_size--].~T();
+            }
+        }
+        void    reserve(size_t n)
+        {
+            if (n > 4611686018427387903)
+                throw OutOfRange();
+            else if (n == 4611686018427387903)
+                throw BadAlloc();
+            if (n > m_capacity)
+                alloc(n, 0);
+    
+        }
         class OutOfRange : public std::exception
 		{
 			public :
 				OutOfRange() throw(){}
 				virtual ~OutOfRange() throw(){}
 				virtual const char* what() const throw() {return ("vector");}
+		};
+        class BadAlloc : public std::exception
+		{
+			public :
+				BadAlloc() throw(){}
+				virtual ~BadAlloc() throw(){}
+				virtual const char* what() const throw() {return ("bad::alloc");}
 		};
     private :
         void    alloc(size_t newCapacity, int n)
@@ -171,7 +254,7 @@ class Vector
             if (!n)
                 m_capacity = newCapacity;
         }
-        size_t  m_size;
-        size_t  m_capacity;
         T*      m_data;
+        size_t  m_size;
+        size_t  m_capacity;  
 };
