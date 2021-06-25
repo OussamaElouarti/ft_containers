@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <stdio.h>
 #include "VectorIterator.hpp"
 #include  <exception>
 
@@ -13,7 +14,11 @@ class Vector
     public :
         Vector() : m_data(nullptr), m_size(0), m_capacity(0)
         {
-            alloc(2, 0);
+            alloc(1, 0);
+        }
+        Vector(Vector<T> & obj) : m_data(nullptr), m_size(0), m_capacity(0)
+        {
+            *this = obj;
         }
         Vector(unsigned long long n, T value) : m_data(nullptr), m_size(0), m_capacity(0)
         {
@@ -25,7 +30,7 @@ class Vector
             for (unsigned int i = 0; i < n; i++)
             {
                 m_size = i;
-                m_data[i] = value;
+                m_data[i] = std::move(value);
             }
             m_size++;
         }
@@ -38,7 +43,7 @@ class Vector
             for(size_t j = 0; i > j; j++)
             {
                 m_size++;
-                m_data[j] = *first;
+                m_data[j] = std::move(*first);
                 first++;
             }
         }
@@ -47,17 +52,18 @@ class Vector
             clear();
             if (m_data)
             {
-                delete[] m_data;
+                delete [] m_data;
                 m_data = nullptr;
             }
         }
         Vector& operator=(const Vector& x)
         {
-            for(size_t i = 0; i < m_size; i++)
-                m_data[i].~T();
-            alloc(x.m_size, 0);
+            T* newBlock = new T[x.m_size];
             for (size_t i = 0; i < x.m_size; i++)
-                m_data[i] = x.m_data[i];
+                newBlock[i] = std::move(x.m_data[i]);
+            if (m_data)
+                delete [] m_data;
+            m_data = newBlock;
             m_size = x.m_size;
             return (*this);
         }
@@ -75,9 +81,8 @@ class Vector
         }
         void    push_back(const T& value)
         {
-            if (m_size > m_capacity)
-                alloc(m_capacity, 0);
-            m_data[m_size] = value;
+            alloc(m_capacity + 1, 0);
+            m_data[m_size] = std::move(value);
             m_size++;
         }
         size_t  size() {return (m_size);}
@@ -119,7 +124,7 @@ class Vector
         {
             alloc(n, 1);
             for (unsigned int i = 0; i < n; i++)
-                m_data[i] = value;;
+                m_data[i] = std::move(value);
         }
         Iterator insert(Iterator position, const T& value)
         {
@@ -128,11 +133,11 @@ class Vector
             for(Iterator it = begin(); it != position; it++)
                 i++;
             i++;
+            alloc(m_capacity * 2, 1);
             for (j = m_size; j >= i; j--)
                 m_data[j] = m_data[j - 1];
-            m_data[j] = value;
+            m_data[j] = std::move(value);
             m_size++;
-            m_capacity *= 2;
             return (position);
         }
         void    insert(Iterator position, size_t n, const T& value)
@@ -147,17 +152,17 @@ class Vector
                 i++;
             alloc(m_capacity * 2, 0);
             for (j = 0; j < i; j++)
-                m_data[j] = newBlock[j];
+                m_data[j] = std::move(newBlock[j]);
             int l = j;
              for (k = 0; k < n; k++)
             {
-                m_data[j] = value;
+                m_data[j] = std::move(value);
                 j++;
                 m_size++;
             }
             while (newBlock[l] && m_data[j])
             {
-                m_data[j] = newBlock[l++];
+                m_data[j] = std::move(newBlock[l++]);
                 j++;
             }
             delete [] newBlock;
@@ -168,6 +173,7 @@ class Vector
             int i = 0;
             int j;
             size_t k;
+            size_t size = m_size;
             for (Iterator it = first; it != last; it++)
                 n++;
             T* newBlock = (T*)::operator new(m_size * sizeof(T));
@@ -177,19 +183,19 @@ class Vector
                 i++;
             alloc(m_capacity + n, 0);
             for (j = 0; j < i; j++)
-                m_data[j] = newBlock[j];
+                m_data[j] = std::move(newBlock[j]);
             int l = j;
              for (k = 0; k < n; k++)
             {
-                m_data[j] = *first;
+                m_data[j] = std::move(*first);
                 j++;
                 first++;
                 m_size++;
             }
-            while (newBlock[l] && m_data[j - 1])
+            for (int b = l; b < size; b++)
             {
-                m_data[j] = newBlock[l++];
-                j++;
+                if (j < m_size + n)
+                    m_data[j++] = std::move(newBlock[b]);   
             }
             delete [] newBlock;
         }
@@ -203,7 +209,7 @@ class Vector
             {
                 alloc(n, 0);
                 for (int i = m_size; m_size < n; m_size++)
-                    m_data[m_size] = value;
+                    m_data[m_size] = std::move(value);
             }
             else
             {
@@ -219,7 +225,42 @@ class Vector
                 throw BadAlloc();
             if (n > m_capacity)
                 alloc(n, 0);
-    
+        }
+        Iterator    erase(Iterator position)
+        {
+            int n = 0;
+            Iterator it;
+            for (it = begin(); it != position; it++)
+                n++;
+            m_data[n].~T();
+            m_size--;
+            for(size_t i = n; i < m_size; i++)
+                m_data[i] = std::move(m_data[i + 1]);
+            return (it);
+        }
+        Iterator    erase(Iterator first, Iterator last)
+        {
+            size_t n = 0;
+            size_t i = 0;
+            Iterator it;
+            for (it = begin(); it != first; it++)
+                n++;
+            for (Iterator it = first; first != last; first++)
+                i++;
+            for (int k = n; k < i + n; k++)
+            {
+                m_data[k].~T();
+                m_data[k] = std::move(m_data[k + i]);
+                m_size--;
+            }
+            return (it);
+        }
+        void    swap(Vector& x)
+        {
+            Vector<T> *tmp = new Vector(*this);
+            *this = x;
+            x = *tmp;
+            delete tmp;
         }
         class OutOfRange : public std::exception
 		{
