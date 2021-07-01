@@ -1,261 +1,374 @@
 #pragma once
 
 #include <iostream>
-#include <stdio.h>
-#include "VectorIterator.hpp"
 #include  <exception>
+#include <cstring>
+#include <memory>
 
-template<typename T>
+template<typename Vector>
+class Vectoriterator
+{
+    public :
+        typedef typename Vector::value_type value_type;
+        typedef value_type* PointerType;
+        typedef const value_type * const_PointerType;
+        typedef value_type& ReferenceType;
+        typedef const value_type & const_ReferenceType;
+        
+    public :
+        Vectoriterator(PointerType ptr) :m_ptr(ptr)
+        {}
+        Vectoriterator(const Vectoriterator& other) :m_ptr(other.m_ptr)
+        {}
+        Vectoriterator() :m_ptr(nullptr)
+        {}
+        Vectoriterator& operator=(const Vectoriterator& x)
+        {
+            this->m_ptr = x.m_ptr;
+            return (*this);
+        }
+        Vectoriterator& operator++()
+        {
+            m_ptr++;
+            return (*this);
+        }
+        operator Vectoriterator<Vector const>() const
+        {
+            return Vectoriterator<Vector const>(m_ptr);
+        }
+        Vectoriterator operator++(int)
+        {
+            Vectoriterator iterator = *this;
+            ++(*this);
+            return (iterator);
+        }
+        Vectoriterator& operator--()
+        {
+            m_ptr--;
+            return (*this);
+        }
+        Vectoriterator operator--(int)
+        {
+            Vectoriterator iterator = *this;
+            --(*this);
+            return (iterator);
+        }
+        ReferenceType operator[](int index)
+        {
+            return (*(m_ptr + index));
+        }
+        const_ReferenceType operator[](int index) const
+        {
+            return (*(m_ptr + index));
+        }
+        PointerType operator->()
+        {
+            return (m_ptr);
+        }
+        const_PointerType operator->() const
+        {
+            return (m_ptr);
+        }
+        ReferenceType operator*()
+        {
+            return *(m_ptr);
+        }
+        const_ReferenceType operator*() const
+        {
+            return *(m_ptr);
+        }
+        bool operator==(const Vectoriterator& other) const
+        {
+            return (m_ptr == other.m_ptr);
+        }
+        bool operator!=(const Vectoriterator& other) const
+        {
+            return !(*this == other);
+        }
+        Vectoriterator operator-(int value)
+        {
+            m_ptr -= value;
+            return (*this);
+        }
+        Vectoriterator operator+(int value)
+        {
+            m_ptr += value;
+            return (*this);
+        }
+    protected :
+        PointerType m_ptr;
+};
+
+template<typename T, class Alloc = std::allocator<T> >
 class Vector
 {
     public :
-        typedef T ValueType;
-        typedef VectorIterator<Vector<T> > Iterator;
+        typedef T value_type;
+        typedef T& reference;
+        typedef const T& const_reference;
+        typedef T* pointer;
+        typedef const T* const_pointer;
+        typedef Vectoriterator<Vector<T> > iterator;
+        typedef Vectoriterator<Vector<const T> > const_iterator;
+        typedef Alloc allocator_type;
+
     public :
-        Vector() : m_data(nullptr), m_size(0), m_capacity(0)
-        {
-            alloc(1, 0);
-        }
+        Vector(const allocator_type& alloc = allocator_type()) : m_data(nullptr), m_size(0), m_capacity(0)
+        {}
         Vector(Vector<T> & obj) : m_data(nullptr), m_size(0), m_capacity(0)
         {
             *this = obj;
         }
-        Vector(unsigned long long n, T value) : m_data(nullptr), m_size(0), m_capacity(0)
+        Vector(unsigned long long n, T value, const allocator_type& alloc = allocator_type()) : m_data(nullptr), m_size(0), m_capacity(0)
         {
             if (n > 4611686018427387903)
                 throw OutOfRange();
             else if (n == 4611686018427387903)
                 throw BadAlloc();
-            alloc(n, 0);
+            m_data = m_alloc.allocate(n);
+            m_alloc.construct(m_data);
             for (unsigned int i = 0; i < n; i++)
             {
                 m_size = i;
                 m_data[i] = std::move(value);
             }
             m_size++;
+            m_capacity = n;
         }
-        Vector(Iterator first, Iterator last) : m_data(nullptr), m_size(0), m_capacity(0)
+        Vector(iterator first, iterator last, const allocator_type& alloc = allocator_type()) : m_data(nullptr), m_size(0), m_capacity(0)
         {
             size_t i = 0;
-            for (Iterator it = first; it != last; it++)
+            for (iterator it = first; it != last; it++)
                 i++;
-            alloc(i, 0);
+            m_data = m_alloc.allocate(i + 1);
+            m_alloc.construct(m_data);
             for(size_t j = 0; i > j; j++)
             {
                 m_size++;
-                m_data[j] = std::move(*first);
+                m_data[j] = *first;
                 first++;
             }
+            m_capacity = i;
         }
         ~Vector()
         {
-            clear();
-            if (m_data)
-            {
-                delete [] m_data;
-                m_data = nullptr;
-            }
+            m_alloc.deallocate(m_data, m_capacity);
+            m_alloc.destroy(m_data);
         }
         Vector& operator=(const Vector& x)
         {
-            T* newBlock = new T[x.m_size];
+            m_alloc.deallocate(m_data, m_capacity);
+            m_data = m_alloc.allocate(x.m_capacity);
             for (size_t i = 0; i < x.m_size; i++)
-                newBlock[i] = std::move(x.m_data[i]);
-            if (m_data)
-                delete [] m_data;
-            m_data = newBlock;
+                m_data[i] = std::move(x.m_data[i]);
             m_size = x.m_size;
+            m_capacity = x.m_capacity;
             return (*this);
         }
-        const    T& operator[](size_t index) const
+        const_reference operator[](size_t index) const
         {
-            // if (index >= m_size)
-            //     std::cout << "index greater than size" << std::endl;
             return (m_data[index]);
         }
-        T& operator[](size_t index)
+        reference operator[](size_t index)
         {
-            // if (index >= m_size)
-            //     std::cout << "index greater than size" << std::endl;
             return (m_data[index]);
         }
         void    push_back(const T& value)
         {
-            alloc(m_capacity + 1, 0);
-            m_data[m_size] = std::move(value);
+            if (m_capacity == 0)
+                reserve(2);
+            else if (m_size + 1 > m_capacity)
+                reserve(m_capacity * 2);
+            m_data[m_size] = value;
             m_size++;
         }
-        size_t  size() {return (m_size);}
-        void    pop_back()
-        {
-            if (m_size > 0)
-            {    
-                m_size--;
-                m_data[m_size].~T();
-            }
-        }
-        void    clear()
-        {
-            for(size_t i = 0; i < m_size; i++)
-                m_data[i].~T();
-            m_size = 0;
-        }
-        Iterator begin() {return (Iterator(m_data));}
-        Iterator rbegin() {return (Iterator(m_data));}
-        Iterator end() {return (Iterator(m_data + m_size));}
-        Iterator rend() {return (Iterator(m_data + m_size));}
+        size_t  size() const {return (m_size);}
+        void    pop_back() { m_size--;}
+        void    clear(){m_size = 0;}
+        iterator begin() {return (iterator(m_data));}
+        iterator end() {return (iterator(m_data + m_size));}
         size_t  capacity(){ return(m_capacity);}
-        size_t  max_size(){ return (4611686018427387903);}
+        size_t  max_size(){ return (m_alloc.max_size());}
         bool    empty()
         {
             if (m_size == 0)
                 return (1);
             return (0);
         }
-        T&  at(unsigned int n)
+        reference  at(size_t n)
         {
             if (n >= m_size)
                 throw OutOfRange();
             return (m_data[n]);
         }
-        T&  front() {return(m_data[0]);}
-        T&  back() {return(m_data[m_size - 1]);}
-        void    assign(size_t n, const T& value)
+        const_reference  at(size_t n) const
         {
-            alloc(n, 1);
-            for (unsigned int i = 0; i < n; i++)
-                m_data[i] = std::move(value);
+            if (n >= m_size)
+                throw OutOfRange();
+            return (m_data[n]);
         }
-        Iterator insert(Iterator position, const T& value)
+        reference  front() {return(m_data[0]);}
+        const_reference  front() const {return(m_data[0]);}
+        reference  back() {return(m_data[m_size - 1]);}
+        const_reference  back() const{return(m_data[m_size - 1]);}
+        void    assign(size_t n, const value_type& value)
+        {
+            if (m_size < n)
+            {
+                m_alloc.deallocate(m_data, m_capacity);
+                m_data = m_alloc.allocate(n, m_data);
+                for (size_t i = 0; i < n; i++)
+                m_data[i] = std::move(value);
+            }
+            for (size_t i = 0; i < n; i++)
+                m_data[i] = value;
+            m_size = n;
+        }
+        iterator insert(iterator position, const T& value)
         {
             int i = 0;
             int j;
-            for(Iterator it = begin(); it != position; it++)
+            for(iterator it = begin(); it != position; it++)
                 i++;
             i++;
-            alloc(m_capacity * 2, 1);
+            m_data = m_alloc.allocate(m_capacity);
+            m_alloc.construct(m_data);
             for (j = m_size; j >= i; j--)
                 m_data[j] = m_data[j - 1];
             m_data[j] = std::move(value);
             m_size++;
             return (position);
         }
-        void    insert(Iterator position, size_t n, const T& value)
-        {
-            int i = 0;
-            int j;
-            size_t k;
-            T* newBlock = (T*)::operator new(m_size * sizeof(T));
-            for (size_t i = 0; i < m_size; i++)
-                newBlock[i] = std::move(m_data[i]);
-            for(Iterator it = begin(); it != position; it++)
-                i++;
-            alloc(m_capacity * 2, 0);
-            for (j = 0; j < i; j++)
-                m_data[j] = std::move(newBlock[j]);
-            int l = j;
-             for (k = 0; k < n; k++)
-            {
-                m_data[j] = std::move(value);
-                j++;
-                m_size++;
-            }
-            while (newBlock[l] && m_data[j])
-            {
-                m_data[j] = std::move(newBlock[l++]);
-                j++;
-            }
-            delete [] newBlock;
-        }
-        void    insert(Iterator position, Iterator first, Iterator last)
-        {
-            size_t n = 0;
-            int i = 0;
-            int j;
-            size_t k;
-            size_t size = m_size;
-            for (Iterator it = first; it != last; it++)
-                n++;
-            T* newBlock = (T*)::operator new(m_size * sizeof(T));
-            for (size_t i = 0; i < m_size; i++)
-                newBlock[i] = std::move(m_data[i]);
-            for(Iterator it = begin(); it != position; it++)
-                i++;
-            alloc(m_capacity + n, 0);
-            for (j = 0; j < i; j++)
-                m_data[j] = std::move(newBlock[j]);
-            int l = j;
-             for (k = 0; k < n; k++)
-            {
-                m_data[j] = std::move(*first);
-                j++;
-                first++;
-                m_size++;
-            }
-            for (int b = l; b < size; b++)
-            {
-                if (j < m_size + n)
-                    m_data[j++] = std::move(newBlock[b]);   
-            }
-            delete [] newBlock;
-        }
-        void    resize(size_t n, T value)
-        {
-            if (n > 4611686018427387903)
-                throw OutOfRange();
-            else if (n == 4611686018427387903)
-                throw BadAlloc();
-            if (n > m_capacity)
-            {
-                alloc(n, 0);
-                for (int i = m_size; m_size < n; m_size++)
-                    m_data[m_size] = std::move(value);
-            }
-            else
-            {
-                for (int i = m_size; i > n; i--)
-                    m_data[m_size--].~T();
-            }
-        }
+        // void    insert(iterator position, size_t n, const T& value)
+        // {
+        //     int i = 0;
+        //     int j;
+        //     size_t k;
+        //     T* newBlock = (T*)::operator new(m_size * sizeof(T));
+        //     for (size_t i = 0; i < m_size; i++)
+        //         newBlock[i] = std::move(m_data[i]);
+        //     for(iterator it = begin(); it != position; it++)
+        //         i++;
+        //     m_data = m_alloc.allocate(m_capacity * 2);
+        //     m_alloc.construct(m_data);
+        //     for (j = 0; j < i; j++)
+        //         m_data[j] = std::move(newBlock[j]);
+        //     int l = j;
+        //      for (k = 0; k < n; k++)
+        //     {
+        //         m_data[j] = std::move(value);
+        //         j++;
+        //         m_size++;
+        //     }
+        //     while (newBlock[l] && m_data[j])
+        //     {
+        //         m_data[j] = std::move(newBlock[l++]);
+        //         j++;
+        //     }
+        //     delete [] newBlock;
+        // }
+        // void    insert(iterator position, iterator first, iterator last)
+        // {
+        //     size_t n = 0;
+        //     int i = 0;
+        //     int j;
+        //     size_t k;
+        //     size_t size = m_size;
+        //     for (iterator it = first; it != last; it++)
+        //         n++;
+        //     T* newBlock = (T*)::operator new(m_size * sizeof(T));
+        //     for (size_t i = 0; i < m_size; i++)
+        //         newBlock[i] = std::move(m_data[i]);
+        //     for(iterator it = begin(); it != position; it++)
+        //         i++;
+        //     m_data = m_alloc.allocate(m_capacity + n);
+        //     m_alloc.construct(m_data);
+        //     for (j = 0; j < i; j++)
+        //         m_data[j] = std::move(newBlock[j]);
+        //     int l = j;
+        //      for (k = 0; k < n; k++)
+        //     {
+        //         m_data[j] = std::move(*first);
+        //         j++;
+        //         first++;
+        //         m_size++;
+        //     }
+        //     for (int b = l; b < size; b++)
+        //     {
+        //         if (j < m_size + n)
+        //             m_data[j++] = std::move(newBlock[b]);   
+        //     }
+        //     delete [] newBlock;
+        // }
+        // void    resize(size_t n, T value)
+        // {
+        //     if (n > 4611686018427387903)
+        //         throw OutOfRange();
+        //     else if (n == 4611686018427387903)
+        //         throw BadAlloc();
+        //     if (n > m_capacity)
+        //     {
+        //         m_data = m_alloc.allocate(n);
+        //         m_alloc.construct(m_data);
+        //         for (int i = m_size; m_size < n; m_size++)
+        //             m_data[m_size] = std::move(value);
+        //     }
+        //     else
+        //     {
+        //         for (int i = m_size; i > n; i--)
+        //             m_data[m_size--].~T();
+        //     }
+        // }
         void    reserve(size_t n)
         {
-            if (n > 4611686018427387903)
+            if (n > m_alloc.max_size())
                 throw OutOfRange();
-            else if (n == 4611686018427387903)
+            else if (n == m_alloc.max_size())
                 throw BadAlloc();
             if (n > m_capacity)
-                alloc(n, 0);
+            {
+                T* block = new T[m_size];
+                for (size_t i = 0; i < m_size; i++)
+                    block[i] = std::move(m_data[i]);
+                m_alloc.deallocate(m_data, m_capacity);
+                m_data = m_alloc.allocate(n);
+                m_alloc.construct(m_data);
+                for (size_t i = 0; i < m_size; i++)
+                    m_data[i] = std::move(block[i]);
+                m_capacity = n;
+                delete [] block;
+            }
         }
-        Iterator    erase(Iterator position)
+        iterator    erase(iterator position)
         {
             int n = 0;
-            Iterator it;
+            iterator it;
             for (it = begin(); it != position; it++)
                 n++;
-            m_data[n].~T();
             m_size--;
             for(size_t i = n; i < m_size; i++)
                 m_data[i] = std::move(m_data[i + 1]);
             return (it);
         }
-        Iterator    erase(Iterator first, Iterator last)
-        {
-            size_t n = 0;
-            size_t i = 0;
-            Iterator it;
-            for (it = begin(); it != first; it++)
-                n++;
-            for (Iterator it = first; first != last; first++)
-                i++;
-            for (int k = n; k < i + n; k++)
-            {
-                m_data[k].~T();
-                m_data[k] = std::move(m_data[k + i]);
-                m_size--;
-            }
-            return (it);
-        }
-        void    swap(Vector& x)
+        // iterator    erase(iterator first, iterator last)
+        // {
+        //     size_t n = 0;
+        //     size_t i = 0;
+        //     iterator it;
+        //     for (it = begin(); it != first; it++)
+        //         n++;
+        //     for (iterator it = first; first != last; first++)
+        //         i++;
+        //     i--;
+        //     for (int k = n; k < i + n; k++)
+        //     {
+        //         m_data[k].~T();
+        //         m_data[k] = std::move(m_data[k + i]);
+        //         m_size--;
+        //     }
+        //     return (it);
+        // }
+        void    swap(Vector<T>& x)
         {
             Vector<T> *tmp = new Vector(*this);
             *this = x;
@@ -277,25 +390,62 @@ class Vector
 				virtual const char* what() const throw() {return ("bad::alloc");}
 		};
     private :
-        void    alloc(size_t newCapacity, int n)
-        {
-            T* newBlock = (T*)::operator new(newCapacity * sizeof(T));
-            if (newCapacity < m_size)
-                m_size  = newCapacity;
-            for (size_t i = 0; i < m_size; i++)
-                newBlock[i] = std::move(m_data[i]);
-            for (size_t i = 0; i < m_size; i++)
-                m_data[i].~T();
-            if (m_data)
-            {
-                delete[] m_data;
-                m_data = nullptr;
-            }
-            m_data = newBlock;
-            if (!n)
-                m_capacity = newCapacity;
-        }
+        Alloc m_alloc;
         T*      m_data;
         size_t  m_size;
         size_t  m_capacity;  
 };
+template<typename T>
+bool operator==(const Vector<T>& lhs, const Vector<T>& rhs)
+{
+    for (size_t i = 0; i < lhs.size(); i++)
+    {
+        if (lhs[i] == rhs[i])
+            continue ;
+        else 
+            return (false);
+    }
+    return (true);
+}
+template<typename T>
+bool operator!=(const Vector<T>& lhs, const Vector<T>& rhs)
+{
+    if (lhs == rhs)
+        return (false);
+    return (true);
+}
+template<typename T>
+bool operator<(const Vector<T>& lhs, const Vector<T>& rhs)
+{
+    for (size_t i = 0; i < lhs.size(); i++)
+    {
+        if (lhs[i] > rhs[i]) 
+            return (false);
+        else if (lhs[i] < rhs[i])
+            return (true);
+    }
+    return (false);
+}
+template<typename T>
+bool operator>(const Vector<T>& lhs, const Vector<T>& rhs)
+{
+    if (lhs < rhs || lhs == rhs)
+        return (false);
+    else if (lhs != rhs)
+        return (true);
+    return (false);
+}
+template<typename T>
+bool operator<=(const Vector<T>& lhs, const Vector<T>& rhs)
+{
+    if (lhs  < rhs || lhs == rhs)
+        return (true);
+    return (false);
+}
+template<typename T>
+bool operator>=(const Vector<T>& lhs, const Vector<T>& rhs)
+{
+    if (lhs  > rhs || lhs == rhs)
+        return (true);
+    return (false);
+}
