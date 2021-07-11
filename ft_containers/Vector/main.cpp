@@ -64,14 +64,30 @@ int main()
     //     std::cout << *it << std::endl;
     // std::cout << va.size() << std::endl;
     // insert
-    std::cout << "insert" << std::endl;
-    va.insert(++va.begin(), 3);
-    va.insert(++va.begin(), 3);
+    Vector<int>::iterator po = va.insert(++va.begin(), 3);
+    // std::cout << "insert" << std::endl;
+    va.insert(++va.begin(),17, 5);
+    va.insert(++va.begin(),van.begin(), --van.end());
+    // std::cout << &(*po) << " " << &(*(++va.begin())) << std::endl;
+    std::cout << *va.erase(va.begin()) << "lol"<< std::endl;
+    std::cout << *va.erase(++va.begin(),--va.end()) << "lol"<< std::endl;
+    std::cout << "n" << std::endl;
      for (Vector<int>::iterator it = va.begin(); it != va.end(); it++)
         std::cout << *it << std::endl;
-    std::cout << va.capacity() << std::endl;
+    std::cout << "n" << std::endl;
+    std::cout << *po << std::endl;
+    // std::cout << &(*po) << " " << &(*(++va.begin())) << std::endl;
+    // std::cout << *po << std::endl;
+    // std::cout << *po << std::endl;
+    // std::cout << "n" << std::endl;
+    // std::cout << "n" << std::endl;
+    // for (Vector<int>::iterator it = van.begin(); it != van.end(); it++)
+    //     std::cout << *it << std::endl;
+    // std::cout << va.capacity() << "   lol"<< std::endl;
+    // std::cout << va.size() << "   lol"<< std::endl;
+    // std::cout << *po << std::endl;
     std::cout << "-----------------------------" << std::endl;
-    // std::vector<int> vo(10, 100);
+    std::vector<int> vo(5, 10);
     // vo.push_back(4);
     // vo.push_back(4);
     // vo.pop_back();
@@ -93,10 +109,16 @@ int main()
     // for (std::vector<int>::iterator it = vop.begin(); it != vop.end(); it++)
     //     std::cout << *it << std::endl;
         // std::cout << vop.capacity() << std::endl;
-    vop.insert(++vop.begin(),3);
-    vop.insert(++vop.begin(),3);
+    std::vector<int>::iterator pol = vop.insert(++vop.begin(),3);
+    vop.insert(++vop.begin(),17,5);
+    vop.insert(++vop.begin(),vo.begin(),--vo.end());
+    std::cout << *vop.erase(vop.begin()) << "lol "<< std::endl;
+    std::cout << *vop.erase(++vop.begin(),--vop.end()) << "lol"<< std::endl;
+    std::cout << "n" << std::endl;
     for (std::vector<int>::iterator it = vop.begin(); it != vop.end(); it++)
         std::cout << *it << std::endl;
-    std::cout << vop.capacity() << std::endl;
+    std::cout << "n" << std::endl;
+    std::cout << *pol << std::endl;
+    // while (1);
     return (0);
 }
