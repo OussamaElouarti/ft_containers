@@ -1,21 +1,16 @@
 #include "headers/Vector.hpp"
-#include "headers/deque.hpp"
+#include "headers/stack.hpp"
 #include  <vector>
-#include  <deque>
-#include <iostream>
-#include <array>
+#include  <stack>
+
 int main()
 {
-    ft::deque<int> lol;
-    lol.push_back(1);
-    lol.push_back(1);
-    lol.push_back(1);
-    lol.push_back(1);
-    lol.push_front(5);
-    lol.pop_front();
-    for (ft::deque<int>::iterator it = lol.begin(); it != lol.end(); it++)
-        std::cout << *it << std::endl;
-    ft::vector<int> van(5,10);
+    ft::vector<int> van(5, 10);
+    ft::vector<int> vat;
+    vat.push_back(1);
+    vat.push_back(2);
+    vat.push_back(3);
+    vat.push_back(4);
     // std::ft::vector<int> bo(++van.begin(),--van.end());
     //  if (bo == van)
     //     std::cout << "kik" << std::endl;
@@ -81,12 +76,17 @@ int main()
     va.insert(++va.begin(),van.begin(), --van.end()); 
     std::cout << *va.erase(va.begin()) << "lol"<< std::endl;
     std::cout << *va.erase(++va.begin(),--va.end()) << "lol"<< std::endl;
+    std::cout << *po << std::endl;
+    std::cout << va.capacity() << std::endl;
+    va.assign(vat.begin(), vat.end());
     std::cout << "n" << std::endl;
      for (ft::vector<int>::iterator it = va.begin(); it != va.end(); it++)
         std::cout << *it << std::endl;
     std::cout << "n" << std::endl;
-    std::cout << *po << std::endl;
     std::cout << va.capacity() << std::endl;
+    ft::stack<int, ft::vector<int> > stonk(va);
+    std::cout << stonk.size() << " stack size" <<  std::endl;
+
     // std::cout << &(*po) << " " << &(*(++va.begin())) << std::endl;
     // std::cout << *po << std::endl;
     // std::cout << *po << std::endl;
@@ -98,16 +98,12 @@ int main()
     // std::cout << va.size() << "   lol"<< std::endl;
     // std::cout << *po << std::endl;
     std::cout << "-----------------------------" << std::endl;
-    std::deque<int> lol1;
-    lol1.push_back(1);
-    lol1.push_back(1);
-    lol1.push_back(1);
-    lol1.push_back(1);
-    lol1.push_front(5);
-    lol1.pop_front();
-    for (std::deque<int>::iterator it = lol1.begin(); it != lol1.end(); it++)
-        std::cout << *it << std::endl;
     std::vector<int> vo(5, 10);
+    std::vector<int> vol;
+    vol.push_back(1);
+    vol.push_back(2);
+    vol.push_back(3);
+    vol.push_back(4);
     // vo.push_back(4);
     // vo.push_back(4);
     // vo.pop_back();
@@ -134,12 +130,16 @@ int main()
     vop.insert(++vop.begin(),vo.begin(),--vo.end());
     std::cout << *vop.erase(vop.begin()) << "lol "<< std::endl;
     std::cout << *vop.erase(++vop.begin(),--vop.end()) << "lol"<< std::endl;
+    std::cout << *pol << std::endl;
+    std::cout << vop.capacity() << std::endl;
+    vop.assign(vol.begin(), vol.end());
     std::cout << "n" << std::endl;
     for (std::vector<int>::iterator it = vop.begin(); it != vop.end(); it++)
         std::cout << *it << std::endl;
     std::cout << "n" << std::endl;
-    std::cout << *pol << std::endl;
+    std::stack<int, std::vector<int> > stank(vop);
     std::cout << vop.capacity() << std::endl;
+    std::cout << stank.size() << " stack size" << std::endl;
     // while (1);
     return (0);
 }
