@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 template <typename T> struct is_integral{static const bool value = false;};
 template <> struct is_integral<bool>{static const bool value = true;};
 template <> struct is_integral<char>{static const bool value = true;};
@@ -90,9 +92,79 @@ bool operator<= (const pair<T1,T2>& lhs, const pair<T1,T2>& rhs)
 { return !(rhs<lhs); }
 template <class T1, class T2>
 bool operator>= (const pair<T1,T2>& lhs, const pair<T1,T2>& rhs)
-template<class T1, class T2>
 { return !(lhs<rhs); }
+template<class T1, class T2>
 pair<T1, T2> make_pair(T1 x, T2 y)
 {
   return (pair<T1, T2>(x, y));
 }
+
+class random_access_iterator_tag { };
+class bidirectional_iterator_tag { };
+class forward_iterator_tag { };
+class input_iterator_tag { };
+class output_iterator_tag { };
+
+template <class Iterator> 
+struct iterator_traits
+{
+    typedef typename Iterator::difference_type       difference_type;
+    typedef typename Iterator::value_type            value_type;
+    typedef typename Iterator::pointer               pointer;
+    typedef typename Iterator::reference             reference;
+    typedef typename Iterator::iterator_category     iterator_category;
+};
+
+template <class T> struct iterator_traits<T*>
+{
+    typedef ptrdiff_t                       difference_type;
+    typedef T                               value_type;
+    typedef T*                              pointer;
+    typedef T&                              reference;
+    typedef random_access_iterator_tag  iterator_category;
+};
+  template <class T> class iterator_traits<const T*>
+  {
+      typedef ptrdiff_t                       difference_type;
+      typedef T                               value_type;
+      typedef const T*                        pointer;
+      typedef const T&                        reference;
+      typedef random_access_iterator_tag  iterator_category;
+  };
+template<class InputIterator>
+typename iterator_traits<InputIterator>::difference_type
+    distance (InputIterator first, InputIterator last)
+{
+    typename iterator_traits<InputIterator>::difference_type rtn = 0;
+    while (first != last)
+    {
+        first++;
+        rtn++;
+    }
+    return (rtn);
+}
+
+template <class Category, class T, class Distance = ptrdiff_t,
+class Pointer = T*, class Reference = T&>
+class iterator
+{
+    public:
+        typedef T           value_type;
+        typedef Distance    difference_type;
+        typedef Pointer     pointer;
+        typedef Reference   reference;
+        typedef Category    iterator_category;
+};
+
+template <class T>
+class bidirectional_iterator : iterator<bidirectional_iterator_tag, T>
+{
+    typedef typename iterator<bidirectional_iterator_tag, T>::iterator_category     iterator_category;
+    typedef typename iterator<bidirectional_iterator_tag, T>::value_type            value_type;
+    typedef typename iterator<bidirectional_iterator_tag, T>::difference_type       difference_type;
+    typedef typename iterator<bidirectional_iterator_tag, T>::pointer               pointer;
+    typedef typename iterator<bidirectional_iterator_tag, T>::reference             reference;
+    
+    private:
+      pointer m_ptr;
+};
