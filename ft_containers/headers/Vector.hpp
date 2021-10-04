@@ -8,14 +8,14 @@
 namespace ft
 {
     template <class T>
-    class random_access_iterator : iterator<random_access_iterator_tag, T>
+    class random_access_iterator : ft::iterator<std::random_access_iterator_tag, T>
     {
         public :
-            typedef typename iterator<random_access_iterator_tag, T>::iterator_category     iterator_category;
-            typedef typename iterator<random_access_iterator_tag, T>::value_type            value_type;
-            typedef typename iterator<random_access_iterator_tag, T>::difference_type       difference_type;
-            typedef T*               pointer;
-            typedef T&             reference;
+            typedef typename ft::iterator<std::random_access_iterator_tag, T>::iterator_category     iterator_category;
+            typedef typename ft::iterator<std::random_access_iterator_tag, T>::value_type            value_type;
+            typedef typename ft::iterator<std::random_access_iterator_tag, T>::difference_type       difference_type;
+            typedef T*                                                                          pointer;
+            typedef T&                                                                          reference;
             
         public :
             random_access_iterator(pointer ptr) :m_ptr(ptr)
@@ -91,7 +91,7 @@ namespace ft
                 return (*this);
             }
         protected :
-            value_type * m_ptr;
+            pointer m_ptr;
     };
     template <class T>
     bool operator== (const random_access_iterator<T>& lhs, const random_access_iterator<T>& rhs)
@@ -134,7 +134,7 @@ namespace ft
         return (lhs.base() - rhs.base());
     }
 
-    template<class T, class Alloc = std::allocator<T> >
+    template<class T, class Alloc = std::allocator<T>  >
     class vector
     {
         public :
@@ -144,8 +144,8 @@ namespace ft
             typedef typename allocator_type::const_reference const_reference;
             typedef typename allocator_type::pointer pointer;
             typedef typename allocator_type::const_pointer const_pointer;
-            typedef random_access_iterator<value_type> iterator;
-            typedef random_access_iterator<const value_type> const_iterator;
+            typedef ft::random_access_iterator<value_type> iterator;
+            typedef ft::random_access_iterator<const value_type> const_iterator;
             typedef ft::reverse_iterator<iterator> reverse_iterator;
             typedef ft::reverse_iterator<const_iterator> const_reverse_iterator;
             typedef size_t size_type;
@@ -189,7 +189,6 @@ namespace ft
             ~vector()
             {
                 m_alloc.deallocate(m_data, m_capacity);
-                m_alloc.destroy(m_data);
             }
             vector& operator=(const vector& x)
             {
@@ -230,8 +229,8 @@ namespace ft
             iterator end()  {return (iterator(m_data + m_size));}
             const_iterator begin() const {return (iterator(m_data));}
             const_iterator end()  const {return (iterator(m_data + m_size));}
-            const_reverse_iterator rbegin() const {return (reverse_iterator(end()));}
-            const_reverse_iterator rend()  const {return (reverse_iterator(begin()));}
+            const_reverse_iterator rbegin() const {return (reverse_iterator(iterator(m_data + m_size)));}
+            const_reverse_iterator rend()  const {return (reverse_iterator(iterator(m_data)));}
             reverse_iterator rbegin() {return (reverse_iterator(end()));}
             reverse_iterator rend() {return (reverse_iterator(begin()));}
             size_type  capacity() const { return(m_capacity);}
@@ -351,10 +350,10 @@ namespace ft
 				    return ;
                 if (n < m_capacity * 2)
                     n = m_capacity * 2;
-                pointer tmp = new value_type[n];
+                value_type *tmp = m_alloc.allocate(n);
                 for (size_type i = 0; i < m_size; i++) 
                     tmp[i] = m_data[i];
-                delete[] m_data;
+                m_alloc.deallocate(m_data, m_capacity);
                 m_data = tmp;
                 m_capacity = n;
             }
@@ -386,23 +385,18 @@ namespace ft
             }
             void    swap(vector& x)
             {
-                T			*tmp_array;
+                T			*tmp_data;
 				size_type	tmp_size;
 
-				// swap the array pointer
-				tmp_array = x.__array;
-				x.__array = this->__array;
-				this->__array = tmp_array;
-
-				// swap the array size
-				tmp_size = x.__size;
-				x.__size = this->__size;
-				this->__size = tmp_size;
-
-				// swap the array capacity
-				tmp_size = x.__capacity;
-				x.__capacity = this->__capacity;
-				this->__capacity = tmp_size;
+				tmp_data = x.m_data;
+				x.m_data = this->m_data;
+				this->m_data = tmp_data;
+				tmp_size = x.m_size;
+				x.m_size = this->m_size;
+				this->m_size = tmp_size;
+				tmp_size = x.m_capacity;
+				x.m_capacity = this->m_capacity;
+				this->m_capacity = tmp_size;
             }
             class OutOfRange : public std::exception
             {
@@ -432,7 +426,7 @@ namespace ft
     template<class T, class Alloc>
     bool operator== (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)
     {
-    return (equal(lhs.begin(), lhs.end(), rhs.begin()));
+    return (ft::equal(lhs.begin(), lhs.end(), rhs.begin()));
     }
     template<class T, class Alloc>
     bool operator!= (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)
@@ -442,12 +436,12 @@ namespace ft
     template<class T, class Alloc>
     bool operator<  (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)
     {
-        return (lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end()));
+        return (ft::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end()));
     }
     template<class T, class Alloc>
     bool operator>  (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)
     {
-    return (!lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end()));
+    return (!ft::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end()));
     }
     template<class T, class Alloc>
     bool operator<= (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)

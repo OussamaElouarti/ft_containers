@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tools.hpp"
+
 namespace ft 
 {
     template<typename Iterator>
@@ -19,9 +20,10 @@ namespace ft
             {}
             explicit reverse_iterator (iterator_type it) : m_iter(it)
             {}
-            template <class Iter>
-            reverse_iterator (const reverse_iterator<Iter>& rev_it) : m_iter(rev_it.base())
+            reverse_iterator (const reverse_iterator& rev_it) : m_iter(rev_it.base())
             {}
+            template<typename iter>
+            reverse_iterator(reverse_iterator<iter> const & it) : m_iter(it.base()) {}
             iterator_type base() const
             {
                 return (m_iter);
@@ -120,6 +122,6 @@ namespace ft
     template <class Iterator>
     typename reverse_iterator<Iterator>::difference_type operator- (const reverse_iterator<Iterator>& lhs, const reverse_iterator<Iterator>& rhs)
     {
-        return (lhs.base() - rhs.base());
+        return (rhs.base() - lhs.base());
     }
 }
