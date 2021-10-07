@@ -285,7 +285,7 @@ namespace ft
                 if (m_size == 0)
                     reserve(1);
                 else if (m_size + 1 > m_capacity)
-                    reserve(m_size + 1);
+                    reserve(m_capacity * 2);
                 for (size_type i = d + 1; i <= m_size; i++)
                     std::swap(m_data[d], m_data[i]);
                 m_alloc.construct(&m_data[d], val);
@@ -294,46 +294,47 @@ namespace ft
             }
             void    insert(iterator position, size_type n, const value_type& val)
             {
-                vector tmp(*this);
+                difference_type d = std::distance(begin(), position);
+                long long j = d;
                 if ((m_size + n) > m_capacity)
-                    reserve(m_size + n);
-                iterator it = position;
-                while (n) 
                 {
-                    *(position) = val;
-                    n--;
-                    position++;
-                    m_size++;
+                    if (n > m_size)
+                        reserve(m_size + n);
+                    else
+                        reserve(m_capacity * 2);
                 }
-                while (it != tmp.end()) {
-                    m_data[m_size] = *it;
-                    ++it;
-                }
+                else if (m_size == 0)
+                    reserve(n);
+                for (long long i = m_size - 1; i >= j; i--)
+                    m_alloc.construct(&m_data[i + n], m_data[i]);
+                for (size_type i = 0; i < n; i++)
+                    m_alloc.construct(&m_data[j++], val);
+                m_size += n;
             }
             template<class InputIterator>
             void    insert(iterator position, InputIterator first, InputIterator last, typename enable_if<!is_integral<InputIterator>::value,InputIterator >::type = InputIterator())
             {
-                vector tmp(position, end());
-                int i = 0;
-                for (iterator it = end(); it != position; it--)
-                    i++;
-                if (m_capacity < m_size + i)
+                difference_type d = std::distance(begin(), position);
+                difference_type range = std::distance(first, last);
+                long long j = d;
+                size_t n = range;
+                if ((m_size + n) > m_capacity)
                 {
-                    if (m_capacity * 2 < m_capacity + i)
-                        reserve(m_size + i);
+                    if (n > m_size)
+                        reserve(m_size + n);
                     else
                         reserve(m_capacity * 2);
                 }
-                m_size -= i;
-                while (first != last) {
-                    push_back(*first);
-                    ++first;
+                else if (m_size == 0)
+                    reserve(n);
+                for (long long i = m_size - 1; i >= j; i--)
+                    m_alloc.construct(&m_data[i + n], m_data[i]);
+                for (size_type i = 0; i < n; i++)
+                {
+                    m_alloc.construct(&m_data[j++], *first);
+                    first++;
                 }
-                iterator it = tmp.begin();
-                while (it != tmp.end()) {
-                    push_back(*it);
-                    ++it;
-                }
+                m_size += n;
             }
             void    resize(size_type n, value_type val = value_type())
             {
@@ -361,8 +362,6 @@ namespace ft
             {
                 if (n <= m_capacity)
 				    return ;
-                else if (n < m_capacity * 2)
-                    n = m_capacity * 2;
                 value_type *tmp = m_alloc.allocate(n);
                 for (size_type i = 0; i < m_size; i++) 
                     tmp[i] = m_data[i];
@@ -372,14 +371,11 @@ namespace ft
             }
             iterator    erase(iterator position)
             {
-                iterator pos(position);
-                while (position != end() - 1)
-                {
-                    *position = *(position + 1);
-                    position++;
-                }
+                difference_type d = std::distance(begin(), position);
+                for (size_type i = d; i <= m_size -1; i++)
+                    std::swap(m_data[d], m_data[i]);
                 m_size--;
-                return (pos);
+                return (begin() + d);
             }
             iterator    erase(iterator first, iterator last)
             {
@@ -442,7 +438,7 @@ namespace ft
     template<class T, class Alloc>
     bool operator>  (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)
     {
-        return (!ft::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end()));
+        return (ft::lexicographical_compare(rhs.begin(), rhs.end(), lhs.begin(), lhs.end()));
     }
     template<class T, class Alloc>
     bool operator<= (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)

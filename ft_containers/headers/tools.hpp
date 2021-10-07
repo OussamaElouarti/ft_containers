@@ -184,39 +184,38 @@ namespace ft
         pointer m_ptr;
   };
 
-  template<typename T>
-  struct BSTNode
+  template<class T>
+  struct AVLNODE
   {
       typedef T       value_type;
       public :
-        value_type    value;
-        BSTNode       *left;
-        BSTNode       *right;
-        BSTNode       *parent;
-        int           color;
+        value_type    data;
+        AVLNODE       *left;
+        AVLNODE       *right;
+        AVLNODE       *parent;
       public :
-          BSTNode() : value(), left(nullptr), right(nullptr), parent(nullptr)
+          AVLNODE() : data(), left(nullptr), right(nullptr), parent(nullptr)
           {}
-          BSTNode(value_type val) : value(val), left(nullptr), right(nullptr), parent(nullptr)
+          AVLNODE(value_type val) : left(nullptr), right(nullptr), parent(nullptr)
           {}
-          BSTNode(const BSTNode& nd) : value(nd.value), left(nd.left), right(nd.right), parent(nd.parent)
+          AVLNODE(const AVLNODE& nd) : data(nd.data), left(nd.left), right(nd.right), parent(nd.parent)
           {}
-          virtual ~BSTNode();
-          BSTNode& operator=(const BSTNode& nd)
+          virtual ~AVLNODE();
+          AVLNODE& operator=(const AVLNODE& nd)
           {
-            value = nd.value;
+            data = nd.data;
             left = nd.left;
             right = nd.right;
             parent = nd.parent;
             return (*this);
           }
-          bool  operator== (const BSTNode<T>& nd)
+          bool  operator== (const AVLNODE<T>& nd)
           {
-              return (value == nd.value);
+              return (data == nd.data);
           }
-          bool operator!=(const BSTNode<T>& nd)
+          bool operator!=(const AVLNODE<T>& nd)
           {
-            return (!(value == nd.value));
+            return (!(data == nd.data));
           }
   };
   template <class T>
