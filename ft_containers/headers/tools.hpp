@@ -185,28 +185,30 @@ namespace ft
   };
 
   template<class T>
-  struct AVLNODE
+  class AVLNODE
   {
-      typedef T       value_type;
       public :
-        value_type    data;
-        AVLNODE       *left;
-        AVLNODE       *right;
-        AVLNODE       *parent;
+        typedef T       value_type;
+        int               bf;
+        value_type        *data;
+        AVLNODE<T>        *left;
+        AVLNODE<T>        *right;
+        int               height;
+
       public :
-          AVLNODE() : data(), left(nullptr), right(nullptr), parent(nullptr)
+          AVLNODE() : data(), left(nullptr), right(nullptr), height(0)
           {}
-          AVLNODE(value_type val) : left(nullptr), right(nullptr), parent(nullptr)
+          AVLNODE(value_type val) : data(val), left(nullptr), right(nullptr)
           {}
-          AVLNODE(const AVLNODE& nd) : data(nd.data), left(nd.left), right(nd.right), parent(nd.parent)
+          AVLNODE(const AVLNODE& nd) : data(nd.data), left(nd.left), right(nd.right)
           {}
-          virtual ~AVLNODE();
+          virtual ~AVLNODE(){};
           AVLNODE& operator=(const AVLNODE& nd)
           {
             data = nd.data;
             left = nd.left;
             right = nd.right;
-            parent = nd.parent;
+            bf = nd.bf;
             return (*this);
           }
           bool  operator== (const AVLNODE<T>& nd)

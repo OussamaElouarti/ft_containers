@@ -265,9 +265,7 @@ namespace ft
             template<class InputIterator>
             void assign (InputIterator first, InputIterator last,  typename enable_if<!is_integral<InputIterator>::value,InputIterator >::type = InputIterator())
             {
-                size_t i = 0;
-                for(InputIterator it = first; it != last; it++)
-                    i++;
+                difference_type i = ft::distance(first, last);
                 reserve(i);
                 i = 0;
                 m_size = 0;
@@ -281,7 +279,7 @@ namespace ft
             }
             iterator insert(iterator position, const value_type& val)
             {
-                difference_type d = std::distance(begin(), position);
+                difference_type d = ft::distance(begin(), position);
                 if (m_size == 0)
                     reserve(1);
                 else if (m_size + 1 > m_capacity)
@@ -294,7 +292,7 @@ namespace ft
             }
             void    insert(iterator position, size_type n, const value_type& val)
             {
-                difference_type d = std::distance(begin(), position);
+                difference_type d = ft::distance(begin(), position);
                 long long j = d;
                 if ((m_size + n) > m_capacity)
                 {
@@ -314,8 +312,8 @@ namespace ft
             template<class InputIterator>
             void    insert(iterator position, InputIterator first, InputIterator last, typename enable_if<!is_integral<InputIterator>::value,InputIterator >::type = InputIterator())
             {
-                difference_type d = std::distance(begin(), position);
-                difference_type range = std::distance(first, last);
+                difference_type d = ft::distance(begin(), position);
+                difference_type range = ft::distance(first, last);
                 long long j = d;
                 size_t n = range;
                 if ((m_size + n) > m_capacity)
