@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <functional>
+
 namespace ft 
 {
   template <typename T> struct is_integral{static const bool value = false;};
@@ -189,18 +190,21 @@ namespace ft
   {
       public :
         typedef T       value_type;
+      
+      public :
         int               bf;
         value_type        *data;
         AVLNODE<T>        *left;
         AVLNODE<T>        *right;
+        AVLNODE<T>        *parent;
         int               height;
 
       public :
           AVLNODE() : data(), left(nullptr), right(nullptr), height(0)
           {}
-          AVLNODE(value_type val) : data(val), left(nullptr), right(nullptr)
+          AVLNODE(value_type val) : data(val), left(nullptr), right(nullptr), height(0), parent(nullptr)
           {}
-          AVLNODE(const AVLNODE& nd) : data(nd.data), left(nd.left), right(nd.right)
+          AVLNODE(const AVLNODE& nd) : data(nd.data), left(nd.left), right(nd.right), height(nd.height), bf(nd.bf), parent(nd.parent)
           {}
           virtual ~AVLNODE(){};
           AVLNODE& operator=(const AVLNODE& nd)
@@ -209,6 +213,8 @@ namespace ft
             left = nd.left;
             right = nd.right;
             bf = nd.bf;
+            height = nd.height;
+            parent = nd.parent;
             return (*this);
           }
           bool  operator== (const AVLNODE<T>& nd)
