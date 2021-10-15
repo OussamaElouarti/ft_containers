@@ -1,4 +1,5 @@
 #pragma once
+#include <typeinfo>
 
 #include "tools.hpp"
 
@@ -9,29 +10,30 @@ namespace ft
     {
         public :
             typedef Iterator iterator_type;
-            typedef typename iterator_traits<Iterator>::value_type value_type;
-            typedef typename iterator_traits<Iterator>::pointer pointer;
-            typedef typename iterator_traits<Iterator>::reference reference;
-            typedef typename iterator_traits<Iterator>::difference_type difference_type;
-            typedef typename iterator_traits<Iterator>::iterator_category iterator_category;
+            typedef typename ft::iterator_traits<Iterator>::value_type value_type;
+            typedef typename ft::iterator_traits<Iterator>::pointer pointer;
+            typedef typename ft::iterator_traits<Iterator>::reference reference;
+            typedef typename ft::iterator_traits<Iterator>::difference_type difference_type;
+            typedef typename ft::iterator_traits<Iterator>::iterator_category iterator_category;
 
         public :
             reverse_iterator() : m_iter()
             {}
-            explicit reverse_iterator (iterator_type it) : m_iter(it)
+            explicit reverse_iterator (iterator_type it) : m_iter(--it)
             {}
             reverse_iterator (const reverse_iterator& rev_it) : m_iter(rev_it.base())
             {}
             template<typename iter>
-            reverse_iterator(reverse_iterator<iter> const & it) : m_iter(it.base()) {}
+            reverse_iterator(reverse_iterator<iter> const & it) : m_iter(--it.base()) {}
             iterator_type base() const
             {
-                return (m_iter);
+                iterator_type tmp(m_iter);
+                return --tmp;
             }
             reference operator*() const
             {
                 iterator_type tmp = m_iter;
-                return (*(--tmp));
+                return (*tmp);
             }
             reverse_iterator operator+ (difference_type n) const
             {
