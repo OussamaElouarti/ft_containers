@@ -13,20 +13,21 @@ namespace ft {
             typedef typename ft::iterator<std::bidirectional_iterator_tag, T>::pointer                   pointer;
             typedef typename ft::iterator<std::bidirectional_iterator_tag, T>::reference                 reference;
         public :
-            map_iterator() : _ptr(nullptr) {}
-            inline map_iterator(Node* node, Node* last) : _ptr(node), _last(last) {}
-            map_iterator(const map_iterator &other) : _ptr(other._ptr), _last(other._last) {}
+            map_iterator() : _ptr(), _tree() , _cmp(){}
+            map_iterator(Node* node, const tree *tre) : _ptr(node), _tree(tre) {}
+            map_iterator(map_iterator const&other) { *this = other; }
             virtual ~map_iterator() {}
             Node* base() const { return (_ptr); }
-            map_iterator& operator= (const map_iterator &x)
+            map_iterator& operator= (map_iterator const& x)
             {
                 _ptr = x._ptr;
-                _last = x._last;
+                _tree = x._tree;
+                _cmp = x._cmp;
                 return (*this);
             }
-            operator map_iterator<const T, Node, Compare, tree>() const
+            operator map_iterator<const T, const Node, Compare, tree>() const
             {
-                return map_iterator<const T, Node, Compare, tree>(_ptr, NULL);
+                return map_iterator<const T, const Node, Compare, tree>(_ptr, _tree);
             }
             T* operator->() const
             {
@@ -39,6 +40,10 @@ namespace ft {
             map_iterator& operator++()
             {
                 Node* p;
+                if (_ptr == nullptr)
+                    return (*this = map_iterator(_tree->findm(_tree->getRoot()), _tree));
+                if (_ptr == _tree->findM(_tree->getRoot()))
+                    return (*this = map_iterator(nullptr, _tree));
                 if (_ptr->right != nullptr)
                 {
                     _ptr = _ptr->right;
@@ -60,17 +65,17 @@ namespace ft {
             map_iterator operator++(int)
             {
                 map_iterator tmp(*this);
-                operator++();
+                ++(*this);
                 return (tmp);
             }
             map_iterator& operator--()
             {
                 Node* p;
                 if (_ptr == nullptr)
-                    _ptr = _last;
+                    _ptr = _tree->findM(_tree->getRoot());
                 else
                 {
-                    if (_ptr->left != nullptr)
+                   if (_ptr->left != nullptr)
                     {
                         _ptr = _ptr->left;
                         while (_ptr->right != nullptr)
@@ -95,19 +100,11 @@ namespace ft {
                 operator--();
                 return (tmp);
             }
+            friend bool	operator==(map_iterator const& lhs, map_iterator const& rhs) { return (lhs._ptr == rhs._ptr); }
+            friend bool	operator!=(map_iterator const& lhs, map_iterator const& rhs) { return (lhs._ptr != rhs._ptr); }
         private :
             Node* _ptr;
-            Node*         _last;
+            tree  const       *_tree;
             Compare      _cmp;
     };
-    template <class T, class Node, class Compare, class tree>
-    bool operator== (const map_iterator<T, Node, Compare, tree>& lhs, const map_iterator<T, Node, Compare, tree>& rhs)
-    {
-        return (lhs.base() == rhs.base());
-    }
-    template <class T, class Node, class Compare, class tree>
-    bool operator!= (const map_iterator<T, Node, Compare, tree>& lhs, const map_iterator<T, Node, Compare, tree>& rhs)
-    {
-        return (lhs.base() != rhs.base());
-    }
 }

@@ -60,7 +60,7 @@ namespace ft
                 operator--();
                 return (tmp);
             }
-            reference operator[](difference_type n)
+            reference operator[](difference_type n) const
             {
                 return (*(operator+(n)));
             }

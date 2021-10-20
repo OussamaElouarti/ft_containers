@@ -93,6 +93,8 @@ namespace ft
   template <class T1, class T2>
   bool operator== (const pair<T1,T2>& lhs, const pair<T1,T2>& rhs)
   {
+    if (!lhs.first && !rhs.first )
+      return (true);
     return (lhs.first == rhs.first && lhs.second == rhs.second);
   }
   template <class T1, class T2>
@@ -198,7 +200,7 @@ namespace ft
         int               height;
 
       public :
-          AVLNODE() : data(), left(nullptr), right(nullptr), parent(nullptr), height(0)
+          AVLNODE() : data(nullptr), left(nullptr), right(nullptr), parent(nullptr), height(0)
           {}
           AVLNODE(value_type val) : data(val), left(nullptr), right(nullptr), height(0), parent(nullptr)
           {}
@@ -215,15 +217,20 @@ namespace ft
             parent = nd.parent;
             return (*this);
           }
-          bool  operator== (const AVLNODE<T>& nd)
-          {
-              return (data == nd.data);
-          }
-          bool operator!=(const AVLNODE<T>& nd)
-          {
-            return (!(data == nd.data));
-          }
   };
+  template<class T>
+  bool  operator== (const AVLNODE<T>&lhs, const AVLNODE<T>&rhs)
+  {
+    std::cout << "lol" << std::endl;
+    if (lhs->data == nullptr && rhs->data == nullptr)
+      return true;
+      return (lhs->data == rhs.data);
+  }
+  template<class T>
+  bool operator!=(const AVLNODE<T>&lhs, const AVLNODE<T>&rhs)
+  {
+    return (!(lhs == rhs));
+  }
   template <class T>
   struct less : std::binary_function<T,T,bool>
   {

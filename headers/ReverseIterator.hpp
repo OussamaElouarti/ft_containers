@@ -17,27 +17,30 @@ namespace ft
             typedef typename ft::iterator_traits<Iterator>::iterator_category iterator_category;
 
         public :
-            reverse_iterator() : m_iter()
+            reverse_iterator() : m_iter(iterator_type())
             {}
-            explicit reverse_iterator (iterator_type it) : m_iter(--it)
-            {}
-            reverse_iterator (const reverse_iterator& rev_it) : m_iter(rev_it.base())
+            explicit reverse_iterator (iterator_type const &it)
+            {
+                iterator_type tmp = it;
+                m_iter = --tmp;
+            }
+            reverse_iterator (reverse_iterator const& rev_it) : m_iter(rev_it.m_iter)
             {}
             template<typename iter>
-            reverse_iterator(reverse_iterator<iter> const & it) : m_iter(--it.base()) {}
+            reverse_iterator(const reverse_iterator<iter> & it) : m_iter(--it.base()) {}
             iterator_type base() const
             {
-                iterator_type tmp(m_iter);
-                return --tmp;
+                iterator_type tmp = m_iter;
+                return ++tmp;
             }
             reference operator*() const
             {
                 iterator_type tmp = m_iter;
-                return (*tmp);
+                return (*(tmp));
             }
             reverse_iterator operator+ (difference_type n) const
             {
-                return (reverse_iterator(m_iter - n));
+                return (reverse_iterator(m_iter - (n - 1)));
             }
             reverse_iterator& operator++()
             {
@@ -57,7 +60,7 @@ namespace ft
             }
             reverse_iterator operator- (difference_type n) const
             {
-                return (reverse_iterator(m_iter + n));
+                return (reverse_iterator(m_iter + (n + 1)));
             }
             reverse_iterator& operator--()
             {
@@ -81,7 +84,7 @@ namespace ft
             }
             reference operator[] (difference_type n) const
             {
-                return (this->base()[-n - 1]);
+                return (m_iter[-n]);
             }
             private :
                 iterator_type m_iter;

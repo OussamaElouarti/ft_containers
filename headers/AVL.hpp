@@ -10,27 +10,36 @@ namespace ft
     class AVL
     {
     public:
-    typedef T value_type;
+        typedef T value_type;
         typedef ft::AVLNODE<const T> const_node;
         typedef Alloc pair_alloc;
         typedef typename Alloc::template rebind<ft::AVLNODE<T> >::other node_alloc;
         typedef ft::map_iterator<T, ft::AVLNODE<T>, Compare, AVL> iterator;
         typedef ft::reverse_iterator<iterator> reverse_iterator;
-        typedef ft::map_iterator<const T, ft::AVLNODE<const T>, Compare, AVL> const_iterator;
+        typedef ft::map_iterator<const T, const ft::AVLNODE<T>, Compare, AVL> const_iterator;
         typedef ft::reverse_iterator<const_iterator> const_reverse_iterator;
         typedef typename value_type::first_type          key;
         typedef typename value_type::second_type          value;
 
     public:
         AVL() : _root(nullptr), _size(0) {}
-        AVL(const AVL &x) : _root(x._root), _size(x._size) {}
-        ~AVL() {}
+        AVL(const AVL &x) : _root(nullptr) {
+            *this = assign(x);
+        }
+        ~AVL() {
+            // deleteTree();
+        }
         
-        AVL&    operator= (const AVL& x)
+        AVL&    assign (AVL const& x)
         {
-            _root = x._root;
+            deleteTree();
+            p_alloc = x.p_alloc;
+            n_alloc = x.n_alloc;
+            _comp = x._comp;
+            for (const_iterator it = x.begin(); it != x.end(); it++)
+                insert(*it);
             _size = x._size;
-            return (*this);
+            return *this;
         }
 
         // return the size of the tree
@@ -43,15 +52,47 @@ namespace ft
                 return true;
             return false;
         }
-
+        void deleteTree()
+        {
+            _root = _deleteTree(_root);
+            _size = 0;
+        }
+        ft::AVLNODE<T> * _deleteTree(ft::AVLNODE<T> * node)
+        {
+            if (node != nullptr)
+            {
+                _deleteTree(node->left);
+                _deleteTree(node->right);
+                deleteNode(node);
+            }
+            return nullptr;
+        }
+        void deleteNode(ft::AVLNODE<T> * node)
+        {
+            p_alloc.destroy(node->data);
+            p_alloc.deallocate(node->data, 1);
+            node->data = NULL;
+            n_alloc.deallocate(node, 1);
+            node = NULL;
+        }
         // clearing the tree
         void clear() { _size = 0; }
 
         // end and begin
-        iterator begin() { return (iterator(find(findMin(_root).first), NULL)); }
-        iterator end() { return (iterator(NULL, find(findMax(_root).first))); }
-        const_iterator begin() const { return (iterator(find(findMin(_root).first), NULL)); }
-        const_iterator end() const { return (iterator(NULL, find(findMax(_root).first))); }
+        iterator begin() {
+            ft::AVLNODE<T> *first = find(findMin(_root).first);
+            return (iterator(first, this));
+        }
+        iterator end() {
+            return (iterator(NULL, this)); 
+            }
+        const_iterator begin() const { 
+            ft::AVLNODE<T> *first = find(findMin(_root).first);
+            return (iterator(first, this));
+        }
+        const_iterator end() const { 
+            return (iterator(NULL, this)); 
+        }
 
         // rend and rbegin
         reverse_iterator rbegin() { return reverse_iterator(end()); }
@@ -99,7 +140,7 @@ namespace ft
             if (contains(_root, val))
             {
                 _root = remove(_root, val);
-                _root->parent = nullptr;
+                // _root->parent = nullptr;
                 _size--;
                 return true;
             }
@@ -120,27 +161,79 @@ namespace ft
             return nullptr;
         }
 
-        ft::AVLNODE<T>* bound(key val, std::string s)
+        iterator bound(key val, std::string s)
         {
+            ft::AVLNODE<T>* con = nullptr;
             if (s == "lower")
-                return (lower_bound(_root, val));
+            {
+                lower_bound(_root, val, &con);
+                if (!con)
+                    return(iterator(nullptr, this));
+                else
+                    return iterator(con, this);
+            }
             else
-                return (upper_bound(_root, val));
-            return nullptr;
+            {
+                upper_bound(_root, val, &con);
+                if (!con)
+                    return(iterator(nullptr, this));
+                else
+                    return iterator(con, this);
+            }
+            return iterator(nullptr, this);
         }
         
-        ft::AVLNODE<T>* bound(key val, std::string s) const
+        const_iterator bound(key val, std::string s) const
         {
+            ft::AVLNODE<T>* con = nullptr;
             if (s == "lower")
-                return (lower_bound(_root, val));
+            {
+                lower_bound(_root, val, &con);
+                if (!con)
+                    return(const_iterator(nullptr, this));
+                else
+                    return const_iterator(con, this);
+            }
             else
-                return (upper_bound(_root, val));
-            return nullptr;
+            {
+                upper_bound(_root, val, &con);
+                if (!con)
+                    return(const_iterator(nullptr, this));
+                else
+                    return const_iterator(con, this);
+            }
+            return iterator(nullptr, this);
         }
 
         // allocator methods
         size_t get_alloc() const { return (n_alloc.max_size()); }
         node_alloc get_allocator() const { return (n_alloc); }
+        ft::AVLNODE<T>* getRoot( void ) const { return (_root); }
+        // methods to help find min and max value
+        ft::AVLNODE<T>* findm(ft::AVLNODE<T>* node) 
+        {
+            while (node->left != nullptr)
+                node = node->left;
+            return (node);
+        }
+        ft::AVLNODE<T>* findM(ft::AVLNODE<T>* node) 
+        {
+            while (node->right != nullptr)
+                node = node->right;
+            return (node);
+        }
+        ft::AVLNODE<T>* findm(ft::AVLNODE<T>* node) const
+        {
+            while (node->left != nullptr)
+                node = node->left;
+            return (node);
+        }
+        ft::AVLNODE<T>* findM(ft::AVLNODE<T>* node) const
+        {
+            while (node->right != nullptr)
+                node = node->right;
+            return (node);
+        }
 
     private:
         //height overload
@@ -161,7 +254,8 @@ namespace ft
             if (node == nullptr)
                 return false;
             bool cmp = _comp(node->data->first, k);
-            if (k == (node->data->first))
+            bool cmp1 = _comp(k, node->data->first);
+            if (!cmp1 && !cmp)
                 return true;
             if (!cmp)
                 return (contains(node->left, k));
@@ -239,7 +333,7 @@ namespace ft
             ft::AVLNODE<T>* tmp = node->right;
             node->right = tmp->left;
             tmp->left = node;
-            tmp->parent = node;
+            _resetParent(node, tmp);
             update(node);
             update(tmp);
             return tmp;
@@ -249,10 +343,31 @@ namespace ft
             ft::AVLNODE<T>* tmp = node->left;
             node->left = tmp->right;
             tmp->right = node;
-            tmp->parent = node;
+            _resetParent(node, tmp);
             update(node);
             update(tmp);
             return tmp;
+        }
+
+
+        void _resetParent(ft::AVLNODE<T>* oldRoot, ft::AVLNODE<T>* newRoot) const
+        {
+            if (!oldRoot->parent)
+            {
+                newRoot->parent = NULL;
+                if (oldRoot->left)
+                    oldRoot->left->parent = oldRoot;
+                if (oldRoot->right)
+                    oldRoot->right->parent = oldRoot;
+                oldRoot->parent = newRoot;
+                return;
+            }
+            newRoot->parent = oldRoot->parent;
+            oldRoot->parent = newRoot;
+            if (oldRoot->left)
+                oldRoot->left->parent = oldRoot;
+            if (oldRoot->right)
+                oldRoot->right->parent = oldRoot;
         }
 
         // remove overload
@@ -261,7 +376,8 @@ namespace ft
             if (node == nullptr)
                 return nullptr;
             int cmp = _comp(val, node->data->first);
-            if (val == node->data->first)
+            bool cmp1 = _comp(node->data->first, val);
+            if (!cmp && !cmp1)
             {
                 if (node->left == nullptr)
                     return node->right;
@@ -290,31 +406,6 @@ namespace ft
             update(node);
             return (balance(node));
         }
-        // methods to help find min and max value
-        T findMin(ft::AVLNODE<T>* node) 
-        {
-            while (node->left != nullptr)
-                node = node->left;
-            return (*(node->data));
-        }
-        T findMax(ft::AVLNODE<T>* node) 
-        {
-            while (node->right != nullptr)
-                node = node->right;
-            return (*(node->data));
-        }
-        T findMin(ft::AVLNODE<T>* node) const
-        {
-            while (node->left != nullptr)
-                node = node->left;
-            return (*(node->data));
-        }
-        T findMax(ft::AVLNODE<T>* node) const
-        {
-            while (node->right != nullptr)
-                node = node->right;
-            return (*(node->data));
-        }
 
         // overload for find
         ft::AVLNODE<T>* find(ft::AVLNODE<T>* node, key val)
@@ -322,7 +413,8 @@ namespace ft
             if (node == nullptr)
                 return nullptr;
             bool cmp = _comp(node->data->first, val);
-            if (val == node->data->first)
+            bool cmp1 = _comp(val, node->data->first);
+            if (!cmp && !cmp1)
                 return node;
             if (!cmp)
                 return (find(node->left, val));
@@ -336,7 +428,8 @@ namespace ft
             if (node == nullptr)
                 return nullptr;
             bool cmp = _comp(node->data->first, val);
-            if (val == node->data->first)
+            bool cmp1 = _comp(val, node->data->first);
+            if (!cmp && !cmp1)
                 return node;
             if (!cmp)
                 return (find(node->left, val));
@@ -345,98 +438,81 @@ namespace ft
             return node;
         }
 
-        ft::AVLNODE<T>* lower_bound(ft::AVLNODE<T>* node, key val)
+        void lower_bound(ft::AVLNODE<T>* node, key val, ft::AVLNODE<T>** con) const
         {
             if (node == nullptr)
-                return nullptr;
+                return ;
             bool cmp = _comp(node->data->first, val);
-            if (val == node->data->first)
-                return node;
+            bool cmp1 = _comp(val, node->data->first);
+            if (!cmp && !cmp1)
+            {
+                *con = node;
+                return ;
+            }
             if (!cmp)
+                lower_bound(node->left, val, con);
+            if (*con == nullptr && !cmp)
             {
-                if (node->left == nullptr)
-                    return node->parent;
-                else
-                    return (lower_bound(node->left, val));
+                *con = node;
+                return ;
             }
-            else if (cmp)
-            {
-                if (node->right == nullptr || node->right->data->first > val)
-                    return nullptr;
-                else
-                    return (lower_bound(node->right, val));
-            }
-            return nullptr;
-        }
-        ft::AVLNODE<T>* lower_bound(ft::AVLNODE<T>* node, key val) const
-        {
-            if (node == nullptr)
-                return nullptr;
-            bool cmp = _comp(node->data->first, val);
-            if (val == node->data->first)
-                return node;
-            if (!cmp)
-            {
-                if (node->left == nullptr)
-                    return node->parent;
-                else
-                    return (lower_bound(node->left, val));
-            }
-            else if (cmp)
-            {
-                if (node->right == nullptr || node->right->data->first > val)
-                    return nullptr;
-                else
-                    return (lower_bound(node->right, val));
-            }
-            return nullptr;
+            if (cmp)
+                lower_bound(node->right, val, con);
         }
 
-        ft::AVLNODE<T>* upper_bound(ft::AVLNODE<T>* node, key val)
+        T findMin(ft::AVLNODE<T>* node) 
         {
             if (node == nullptr)
-                return nullptr;
-            bool cmp = _comp(node->data->first, val);
-            if (val == node->data->first)
-                return node->parent;
-            if (!cmp)
-            {
-                if (node->left == nullptr)
-                    return node;
-                else
-                    return (upper_bound(node->left, val));
-            }
-            else if (cmp)
-            {
-                if (node->right == nullptr || node->right->data->first > val)
-                    return node->right;
-                else
-                    return (upper_bound(node->right, val));
-            }
-            return nullptr;
+                return (ft::make_pair(key(), value()));
+            while (node->left != nullptr)
+                node = node->left;
+            return (*(node->data));
         }
-        ft::AVLNODE<T>* upper_bound(ft::AVLNODE<T>* node, key val) const
+        T findMax(ft::AVLNODE<T>* node) 
         {
             if (node == nullptr)
-                return nullptr;
-            bool cmp = _comp(node->data->first, val);
-            if (val == node->data->first)
-                return node->parent;
+                return (ft::make_pair(key(), value()));
+            while (node->right != nullptr)
+                node = node->right;
+            return (*(node->data));
+        }
+        T findMin(ft::AVLNODE<T>* node) const
+        {
+            if (node == nullptr)
+                return (ft::make_pair(key(), value()));
+            while (node->left != nullptr)
+                node = node->left;
+            return (*(node->data));
+        }
+        T findMax(ft::AVLNODE<T>* node) const
+        {
+            if (node == nullptr)
+                return (ft::make_pair(key(), value()));
+            while (node->right != nullptr)
+                node = node->right;
+            return (*(node->data));
+        }
+
+        void upper_bound(ft::AVLNODE<T>* node, key val, ft::AVLNODE<T>** con) const
+        {
+            if (node == nullptr)
+                return ;
+            bool cmp =_comp(node->data->first, val);
+            bool cmp1 = _comp(val, node->data->first);
+            if (!cmp && !cmp1)
+            {
+                *con = node->right;
+                return ;
+            }
             if (!cmp)
+                upper_bound(node->left, val, con);
+            if (*con == nullptr && !cmp)
             {
-                if (node->left == nullptr)
-                    return node;
-                else
-                    return (upper_bound(node->left, val));
+                *con = node;
+                return ;
             }
-            else if (cmp)
-            {
-                if (node->right == nullptr || node->right->data->first > val)
-                    return node->right;
-                else
-                    return (upper_bound(node->right, val));
-            }
-            return nullptr;
+            if (cmp)
+                upper_bound(node->right, val, con);
         }
     private:
         ft::AVLNODE<T>* _root;
